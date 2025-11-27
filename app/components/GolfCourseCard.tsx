@@ -1,24 +1,39 @@
-import { MapPin } from 'lucide-react';
+import { MapPin, Loader2 } from 'lucide-react';
 import { GolfCourse } from '../types';
 // import { WeatherIcon } from './WeatherIcon';
 
 interface GolfCourseCardProps {
   course: GolfCourse;
   onClick: () => void;
+  // 좌표 정보 (선택적)
+  coordinates?: [number, number]; // [lng, lat]
+  disabled?: boolean;
 }
 
-export function GolfCourseCard({ course, onClick }: GolfCourseCardProps) {
+export function GolfCourseCard({ course, onClick, coordinates, disabled }: GolfCourseCardProps) {
+  // location이 없고 coordinates가 있으면 좌표를 표시
+  const locationText = course.location || 
+    (coordinates ? 
+      `좌표: ${coordinates[1].toFixed(4)}, ${coordinates[0].toFixed(4)}` : 
+      '위치 정보 없음');
+
   return (
     <button
       onClick={onClick}
-      className="w-full bg-white rounded-2xl shadow-md hover:shadow-lg transition-all p-4 text-left border border-gray-100 active:scale-98"
+      disabled={disabled}
+      className={`w-full bg-white rounded-2xl shadow-md hover:shadow-lg transition-all p-4 text-left border border-gray-100 active:scale-98 ${
+        disabled ? 'opacity-60 cursor-wait' : ''
+      }`}
     >
       <div className="flex items-start justify-between">
         <div className="flex-1">
-          <h3 className="text-gray-900 mb-1">{course.name}</h3>
+          <div className="flex items-center gap-2 mb-1">
+            <h3 className="text-gray-900 font-semibold">{course.name}</h3>
+            {disabled && <Loader2 className="w-4 h-4 text-gray-400 animate-spin" />}
+          </div>
           <div className="flex items-center gap-1 text-gray-500 mb-3">
             <MapPin className="w-4 h-4" />
-            <span className="text-sm">{course.location}</span>
+            <span className="text-sm">{locationText}</span>
           </div>
           
           {/* <div className="flex items-center gap-4 text-sm text-gray-600">

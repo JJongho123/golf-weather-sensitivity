@@ -41,6 +41,7 @@ export type WeatherCondition =
   | "snowy";
 
 export type Region =
+  | "all"
   | "seoulGyeonggi"
   | "gangwon"
   | "chungbuk"
