@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fetchGolfCoursesFromVWorld, filterGolfCoursesByName } from '@/lib/vworld';
 
-// 동적 라우트로 설정 (searchParams 사용으로 인해 필요)
-// ISR 캐싱(24시간)은 fetchGolfCoursesFromVWorld 내부의 fetch에서 revalidate: 86400으로 처리됨
-export const dynamic = 'force-dynamic';
+// ISR 설정: 24시간(86400초)마다 재검증
+// 빌드 시점에 데이터를 가져와서 캐싱하고, 24시간 후 자동으로 재검증
+export const revalidate = 86400; // 24시간
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,6 +18,8 @@ export async function GET(request: NextRequest) {
     if (search) {
       golfCourses = filterGolfCoursesByName(golfCourses, search);
     }
+
+    // console.log(golfCourses);
 
     return NextResponse.json({
       success: true,

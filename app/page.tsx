@@ -1,56 +1,57 @@
-'use client'
+import { CapacitorInitializer } from './components/CapacitorInitializer'
+import { getGolfCourses } from '@/lib/golf-courses'
+import { HomeClient } from './components/HomeClient'
+import { Region } from './types'
 
-import { useEffect } from 'react'
-import { useState } from 'react'
-import { CourseListView } from './components/CourseListView'
-import { CourseDetailView } from './components/CourseDetailView'
-import { GolfCourse } from './types'
+/**
+ * 서버 컴포넌트: 빌드 시점에 모든 지역의 골프장 데이터를 가져와서 캐싱 (ISR)
+ * 24시간마다 재검증됨
+ * 
+ * 모든 지역의 데이터를 빌드 시점에 미리 가져와서 런타임 API 호출을 완전히 제거
+ */
+export default async function Home() {
+  // 모든 지역 목록
+  const regions: Region[] = [
+    'all',
+    'seoulGyeonggi',
+    'gangwon',
+    'chungbuk',
+    'chungnam',
+    'gyeongbuk',
+    'gyeongnam',
+    'jeonbuk',
+    'jeonnam',
+    'jeju',
+  ];
 
-export default function Home() {
-  const [selectedCourse, setSelectedCourse] = useState<GolfCourse | null>(null)
+  console.log(`[ISR 빌드 시작] 총 ${regions.length}개 지역 데이터 로드 시작`);
+  
+  // 빌드 시점에 모든 지역의 데이터를 병렬로 가져오기 (ISR 캐싱)
+  const coursesDataByRegion = await Promise.all(
+    regions.map(async (region) => {
+      console.log(`[ISR] 지역 데이터 로드 시작: ${region}`);
+      const data = await getGolfCourses(region);
+      console.log(`[ISR] 지역 데이터 로드 완료: ${region} (${data.data.length}개)`);
+      return { region, courses: data.data };
+    })
+  );
 
-  useEffect(() => {
-    // Capacitor가 브라우저에서 실행 중인지 확인
-    if (typeof window !== 'undefined') {
-      import('@capacitor/core').then(({ Capacitor }) => {
-        if (Capacitor.isNativePlatform()) {
-          console.log('네이티브 앱에서 실행 중')
-          // 네이티브 기능 초기화
-          initializeNativeFeatures()
-        } else {
-          console.log('웹 브라우저에서 실행 중')
-        }
-      }).catch(err => {
-        console.log('Capacitor 로드 실패:', err)
-      })
-    }
-  }, [])
+  // 지역별 데이터를 객체로 변환 (Map은 직렬화되지 않으므로 객체 사용)
+  const coursesByRegion: Record<Region, typeof coursesDataByRegion[0]['courses']> = {} as Record<Region, typeof coursesDataByRegion[0]['courses']>;
+  coursesDataByRegion.forEach(({ region, courses }) => {
+    coursesByRegion[region] = courses;
+  });
 
-  const initializeNativeFeatures = async () => {
-    try {
-      // StatusBar 설정
-      const { StatusBar, Style } = await import('@capacitor/status-bar')
-      await StatusBar.setStyle({ style: Style.Light })
-      await StatusBar.setBackgroundColor({ color: '#16a34a' })
-      
-      // Keyboard 설정
-      const { Keyboard } = await import('@capacitor/keyboard')
-      Keyboard.setAccessoryBarVisible({ isVisible: true })
-    } catch (error) {
-      console.log('네이티브 기능 초기화 실패:', error)
-    }
-  }
-
+  const totalCourses = coursesDataByRegion.reduce((sum, { courses }) => sum + courses.length, 0);
+  console.log(`[ISR 빌드 완료] 총 ${regions.length}개 지역, 전체 골프장 수: ${totalCourses}개`);
+  
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-green-50">
-      {!selectedCourse ? (
-        <CourseListView onSelectCourse={setSelectedCourse} />
-      ) : (
-        <CourseDetailView 
-          course={selectedCourse} 
-          onBack={() => setSelectedCourse(null)} 
-        />
-      )}
-    </div>
+    <>
+      <CapacitorInitializer />
+      <HomeClient 
+        coursesByRegion={coursesByRegion}
+        initialRegion="all"
+      />
+    </>
   )
 }

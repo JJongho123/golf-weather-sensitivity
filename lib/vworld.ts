@@ -76,6 +76,8 @@ export async function fetchGolfCoursesFromVWorld(
     size: '1000',
   });
 
+  console.log(`[VWorld API 호출 시작] 지역: ${region}`);
+  
   const response = await fetch(`${apiUrl}?${params.toString()}`, {
     next: { revalidate: 86400 }, // 24시간 (86400초)
   });
@@ -91,12 +93,15 @@ export async function fetchGolfCoursesFromVWorld(
   }
 
   const features = data.response.result?.featureCollection?.features || [];
-
-  return features.map((feature) => ({
+  const courses = features.map((feature) => ({
     id: feature.id,
     name: feature.properties.golf_name,
     coordinates: feature.geometry.coordinates,
   }));
+
+  console.log(`[VWorld API 호출 완료] 지역: ${region}, 골프장 수: ${courses.length}`);
+
+  return courses;
 }
 
 // 골프장명으로 검색 (클라이언트 측 필터링)

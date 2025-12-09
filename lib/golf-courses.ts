@@ -10,9 +10,11 @@ export interface GolfCourseListResponse {
 
 // 서버 컴포넌트에서 ISR 방식으로 골프장 목록 조회
 // 24시간(86400초)마다 재검증
-export async function getGolfCourses(): Promise<GolfCourseListResponse> {
+// 빌드 시점에 실행되어 데이터를 캐싱함
+export async function getGolfCourses(region: string = 'all'): Promise<GolfCourseListResponse> {
   try {
-    const golfCourses = await fetchGolfCoursesFromVWorld();
+    const golfCourses = await fetchGolfCoursesFromVWorld(region);
+    console.log(`[ISR] 골프장 목록 조회 완료 (지역: ${region}, 개수: ${golfCourses.length})`);
 
     return {
       success: true,

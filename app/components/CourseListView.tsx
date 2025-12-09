@@ -1,43 +1,28 @@
 'use client';
 
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, useMemo, Suspense } from 'react';
 import { Search } from 'lucide-react';
 import { GolfCourse, Region } from '../types';
 import { RegionFilter } from './RegionFilter';
 import { CourseListSkeleton } from './Loading';
 import { GolfCourseList } from './GolfCourseList';
 import type { VWorldGolfCourse } from '@/lib/vworld';
+import { filterGolfCoursesByName } from '@/lib/vworld';
 
 interface CourseListViewProps {
   onSelectCourse: (course: GolfCourse) => void;
+  coursesByRegion: Record<Region, VWorldGolfCourse[]>; // 모든 지역의 데이터 (빌드 시점에 가져온 캐싱된 데이터)
+  initialRegion: Region; // 초기 지역
 }
 
-// API 호출 함수
-async function fetchCourses(
-  region: string,
-  search: string
-): Promise<VWorldGolfCourse[]> {
-  const params = new URLSearchParams({ region });
-  if (search.trim()) {
-    params.append('search', search.trim());
-  }
-
-  const response = await fetch(`/api/golf-courses?${params.toString()}`);
-  const result = await response.json();
-
-  if (!result.success) {
-    throw new Error(result.error || '골프장 목록을 불러오는데 실패했습니다.');
-  }
-
-  return result.data;
-}
-
-export function CourseListView({ onSelectCourse }: CourseListViewProps) {
+export function CourseListView({ 
+  onSelectCourse, 
+  coursesByRegion,
+  initialRegion = 'all'
+}: CourseListViewProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearch, setDebouncedSearch] = useState('');
-  const [selectedRegion, setSelectedRegion] = useState<Region>('all');
-  const [coursesPromise, setCoursesPromise] =
-    useState<Promise<VWorldGolfCourse[]> | null>(null);
+  const [selectedRegion, setSelectedRegion] = useState<Region>(initialRegion);
 
   // 검색어 디바운스
   useEffect(() => {
@@ -47,10 +32,18 @@ export function CourseListView({ onSelectCourse }: CourseListViewProps) {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // 지역/검색어 변경 시 새 Promise 생성 (클라이언트에서만)
-  useEffect(() => {
-    setCoursesPromise(fetchCourses(selectedRegion, debouncedSearch));
-  }, [selectedRegion, debouncedSearch]);
+  // 선택된 지역의 데이터 가져오기 (모든 데이터가 이미 메모리에 있음 - API 호출 없음)
+  const regionCourses = coursesByRegion[selectedRegion] || [];
+  
+  // 검색어로 필터링 (클라이언트 측 필터링만 수행)
+  const filteredCourses = filterGolfCoursesByName(regionCourses, debouncedSearch);
+  
+  // Promise로 변환 (GolfCourseList 컴포넌트가 Promise를 기대하므로)
+  // useMemo를 사용하여 filteredCourses가 변경될 때만 새 Promise 생성
+  const coursesPromise = useMemo(
+    () => Promise.resolve(filteredCourses),
+    [filteredCourses]
+  );
 
   return (
     <div className="max-w-md mx-auto min-h-screen pb-6">
@@ -81,17 +74,13 @@ export function CourseListView({ onSelectCourse }: CourseListViewProps) {
 
       {/* Course List with Suspense */}
       <div className="px-4 mt-4 space-y-3">
-        {coursesPromise ? (
-          <Suspense fallback={<CourseListSkeleton count={5} />}>
-            <GolfCourseList
-              coursesPromise={coursesPromise}
-              region={selectedRegion}
-              onSelectCourse={onSelectCourse}
-            />
-          </Suspense>
-        ) : (
-          <CourseListSkeleton count={5} />
-        )}
+        <Suspense fallback={<CourseListSkeleton count={5} />}>
+          <GolfCourseList
+            coursesPromise={coursesPromise}
+            region={selectedRegion}
+            onSelectCourse={onSelectCourse}
+          />
+        </Suspense>
       </div>
     </div>
   );
