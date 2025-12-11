@@ -29,13 +29,15 @@ export async function GET(request: NextRequest) {
 
     // 위경도를 격자 좌표로 변환
     const { nx, ny } = convertLatLonToGrid(lat, lon);
-    
+    console.log(`[좌표 변환] 위도: ${lat}, 경도: ${lon} → 격자 nx: ${nx}, ny: ${ny}`);
+
     // 발표일자와 발표시각 가져오기
     const { base_date, base_time } = getBaseDateTime();
+    console.log(`[발표시각] base_date: ${base_date}, base_time: ${base_time}`);
 
     const baseUrl = process.env.WEATHER_API_URL;
 
-    
+
     // 초단기실황과 단기예보를 동시에 호출
     const [ultraSrtNcstUrl, forecastUrl] = [
       `${baseUrl}/getUltraSrtNcst`,
@@ -44,7 +46,7 @@ export async function GET(request: NextRequest) {
       const params = new URLSearchParams({
         serviceKey: serviceKey,
         pageNo: '1',
-        numOfRows: '1000',
+        numOfRows: '300',  // 24시간 시간별 예보용 (288개 + 여유)
         dataType: 'JSON',
         base_date: base_date,
         base_time: base_time,
@@ -54,8 +56,12 @@ export async function GET(request: NextRequest) {
       return `${url}?${params.toString()}`;
     });
 
-    console.log(ultraSrtNcstUrl)
-    console.log(forecastUrl)
+    console.log('\n========== API 요청 URL ==========');
+    console.log('[초단기실황 API]');
+    console.log(ultraSrtNcstUrl);
+    console.log('\n[단기예보 API]');
+    console.log(forecastUrl);
+    console.log('==================================\n')
 
 
     // 두 API를 병렬로 호출
@@ -73,13 +79,28 @@ export async function GET(request: NextRequest) {
       forecastResponse.json(),
     ]);
 
+    console.log('\n========== API 응답 확인 ==========');
+    console.log(`[초단기실황 응답] resultCode: ${ultraSrtData.response?.header?.resultCode}, resultMsg: ${ultraSrtData.response?.header?.resultMsg}`);
+    console.log(`[초단기실황 데이터 개수] ${ultraSrtData.response?.body?.items?.item?.length || 0}개`);
+    console.log('[초단기실황 전체 데이터]');
+    console.log(JSON.stringify(ultraSrtData.response?.body?.items?.item, null, 2));
+
+    console.log(`\n[단기예보 응답] resultCode: ${forecastData.response?.header?.resultCode}, resultMsg: ${forecastData.response?.header?.resultMsg}`);
+    console.log(`[단기예보 데이터 개수] ${forecastData.response?.body?.items?.item?.length || 0}개`);
+    console.log('[단기예보 전체 데이터 - 처음 50개만]');
+    console.log(JSON.stringify(forecastData.response?.body?.items?.item?.slice(0, 50), null, 2));
+    console.log('==================================\n');
+
     // 응답 코드 확인
-    if (
-      ultraSrtData.response?.header?.resultCode !== '00'
-        ||  forecastData.response?.header?.resultCode !== '00'
-    ) {
+    if (ultraSrtData.response?.header?.resultCode !== '00') {
       throw new Error(
-        `API 오류: ${ultraSrtData.response?.header?.resultMsg || forecastData.response?.header?.resultMsg}`
+        `초단기실황 API 오류 (${ultraSrtData.response?.header?.resultCode}): ${ultraSrtData.response?.header?.resultMsg}`
+      );
+    }
+
+    if (forecastData.response?.header?.resultCode !== '00') {
+      throw new Error(
+        `단기예보 API 오류 (${forecastData.response?.header?.resultCode}): ${forecastData.response?.header?.resultMsg}`
       );
     }
 

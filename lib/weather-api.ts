@@ -48,19 +48,38 @@ export function convertLatLonToGrid(lat: number, lon: number): { nx: number; ny:
 
 /**
  * 현재 날짜와 시간을 API 형식으로 변환
- * 발표 시각은 매 정시(00분)에 갱신됩니다
+ * 단기예보 API는 하루 8회 발표 (02:10, 05:10, 08:10, 11:10, 14:10, 17:10, 20:10, 23:10)
  */
 export function getBaseDateTime(): { base_date: string; base_time: string } {
   const now = new Date();
-  
-  // 발표 시각: 매 정시 (00, 01, 02, ..., 23)
-  // 현재 시각이 정시가 아니면 이전 정시로 설정
-  const baseTime = String(now.getHours()).padStart(2, '0') + '00';
-  
+
+  // 단기예보 발표 시각 (24시간 형식, 정렬된 상태)
+  const forecastTimes = ['0210', '0510', '0810', '1110', '1410', '1710', '2010', '2310'];
+
+  // 현재 시각을 HHMM 형식으로 변환
+  const currentHour = now.getHours();
+  const currentMinute = now.getMinutes();
+  const currentTime = currentHour * 100 + currentMinute;
+
+  // 가장 최근 발표 시각 찾기
+  let baseTime = forecastTimes[forecastTimes.length - 1]; // 기본값: 전날 23:10
+  let useYesterday = true;
+
+  for (const time of forecastTimes) {
+    const timeNum = parseInt(time);
+    if (currentTime >= timeNum) {
+      baseTime = time;
+      useYesterday = false;
+    } else {
+      break;
+    }
+  }
+
   // 발표일자: YYYYMMDD 형식
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
+  const targetDate = useYesterday ? new Date(now.getTime() - 24 * 60 * 60 * 1000) : now;
+  const year = targetDate.getFullYear();
+  const month = String(targetDate.getMonth() + 1).padStart(2, '0');
+  const day = String(targetDate.getDate()).padStart(2, '0');
   const baseDate = `${year}${month}${day}`;
 
   return { base_date: baseDate, base_time: baseTime };
@@ -194,7 +213,8 @@ export function parseForecastData(
   
   // 시간별로 그룹화
   const hourlyMap = new Map<string, Record<string, string>>();
-  
+  console.log('items', items);
+
   items.forEach((item) => {
     const key = `${item.fcstDate}_${item.fcstTime}`;
     if (!hourlyMap.has(key)) {
@@ -203,14 +223,28 @@ export function parseForecastData(
     hourlyMap.get(key)![item.category] = item.fcstValue;
   });
 
+  // 현재 시각 기준으로 24시간 데이터만 추출
+  const now = new Date();
+
   // 시간별 데이터 변환
   const hourly: HourlyWeather[] = Array.from(hourlyMap.entries())
     .map(([key, data]) => {
       const [date, time] = key.split('_');
-      const hour = time.substring(0, 2);
-      
+      const hourNum = parseInt(time.substring(0, 2));
+
+      // 날짜와 시간을 timestamp로 변환
+      const itemDate = new Date(
+        parseInt(date.substring(0, 4)),
+        parseInt(date.substring(4, 6)) - 1,
+        parseInt(date.substring(6, 8)),
+        hourNum
+      );
+
       return {
-        time: `${hour}시`,
+        time: `${String(hourNum).padStart(2, '0')}시`,
+        date: date,
+        hourNum: hourNum,
+        timestamp: itemDate.getTime(),
         temperature: parseFloat(data.TMP || '0'),
         condition: getWeatherCondition(
           data.SKY || '1',
@@ -219,8 +253,10 @@ export function parseForecastData(
         precipitationChance: parseInt(data.POP || '0'),
       };
     })
-    .sort((a, b) => a.time.localeCompare(b.time))
-    .slice(0, 24); // 최대 24시간
+    .filter(item => item.timestamp >= now.getTime()) // 현재 시각 이후만
+    .sort((a, b) => a.timestamp - b.timestamp) // 시간순 정렬
+    .slice(0, 24) // 최대 24시간
+    .map(({ hourNum, date, timestamp, ...rest }) => rest); // 불필요한 필드 제거
 
   // 일별 데이터 변환 (최고/최저 기온 추출)
   const dailyMap = new Map<string, {

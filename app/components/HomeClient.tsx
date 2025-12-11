@@ -18,6 +18,8 @@ interface HomeClientProps {
 export function HomeClient({ coursesByRegion, initialRegion }: HomeClientProps) {
   const [selectedCourse, setSelectedCourse] = useState<GolfCourse | null>(null);
 
+  console.log('selectedCourse', selectedCourse);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-green-50">
       {!selectedCourse ? (
