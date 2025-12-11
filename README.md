@@ -145,14 +145,3 @@ type Region = "all" | "seoul" | "gyeonggi" | "gangwon" | "chungcheong" | "jeolla
 - `npm run cap:run:android`: 빌드 후 Android 앱 실행
 - `npm run dev:android`: 개발 서버 + Android Studio 동시 실행
 
-## 🔄 SSR vs 정적 빌드
-
-이 프로젝트는 현재 **SSR(Server-Side Rendering) 모드**로 설정되어 있습니다.
-
-### SSR 모드 (현재 설정)
-- ✅ 서버 사이드 렌더링 사용 가능
-- ✅ 동적 라우팅, API Routes 사용 가능
-- ✅ 실시간 데이터 업데이트 가능
-- ⚠️ 프로덕션에서 Next.js 서버 필요
-- ⚠️ 네트워크 연결 필요
-
