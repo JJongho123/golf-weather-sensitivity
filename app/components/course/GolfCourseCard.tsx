@@ -1,5 +1,5 @@
 import { MapPin, Loader2 } from 'lucide-react';
-import { GolfCourse } from '../types';
+import { GolfCourse } from '../../types';
 // import { WeatherIcon } from './WeatherIcon';
 
 interface GolfCourseCardProps {

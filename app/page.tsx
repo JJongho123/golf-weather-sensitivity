@@ -1,6 +1,6 @@
-import { CapacitorInitializer } from './components/CapacitorInitializer'
+import { CapacitorInitializer } from './components/platform/CapacitorInitializer'
 import { getGolfCourses } from '@/lib/golf-courses'
-import { HomeClient } from './components/HomeClient'
+import { HomeClient } from './components/views/HomeClient'
 import { Region } from './types'
 
 /**

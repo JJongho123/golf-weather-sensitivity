@@ -1,5 +1,5 @@
-import { HourlyWeather } from '../types';
-import { WeatherIcon } from './WeatherIcon';
+import { HourlyWeather } from '../../types';
+import { WeatherIcon } from '../common/WeatherIcon';
 
 interface HourlyForecastProps {
   forecast: HourlyWeather[];

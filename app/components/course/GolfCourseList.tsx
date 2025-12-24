@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { use } from 'react';
-import { GolfCourse, Region } from '../types';
+import { GolfCourse, Region } from '../../types';
 import type { VWorldGolfCourse } from '@/lib/vworld';
 import { GolfCourseCard } from './GolfCourseCard';
 import { parseForecastData } from '@/lib/weather-api';

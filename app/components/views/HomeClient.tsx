@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { CourseListView } from './CourseListView';
 import { CourseDetailView } from './CourseDetailView';
-import { GolfCourse, Region } from '../types';
+import { GolfCourse, Region } from '../../types';
 import type { VWorldGolfCourse } from '@/lib/vworld';
 
 interface HomeClientProps {

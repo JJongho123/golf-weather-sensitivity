@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useMemo, Suspense } from 'react';
 import { Search } from 'lucide-react';
-import { GolfCourse, Region } from '../types';
-import { RegionFilter } from './RegionFilter';
-import { CourseListSkeleton } from './Loading';
-import { GolfCourseList } from './GolfCourseList';
+import { GolfCourse, Region } from '../../types';
+import { RegionFilter } from '../course/RegionFilter';
+import { CourseListSkeleton } from '../common/Loading';
+import { GolfCourseList } from '../course/GolfCourseList';
 import type { VWorldGolfCourse } from '@/lib/vworld';
 import { filterGolfCoursesByName } from '@/lib/vworld';
 

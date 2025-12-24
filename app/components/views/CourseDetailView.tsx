@@ -1,8 +1,8 @@
 import { ArrowLeft, Droplets, Wind, Navigation } from 'lucide-react';
-import { GolfCourse } from '../types';
-import { WeatherIcon } from './WeatherIcon';
-import { HourlyForecast } from './HourlyForecast';
-import { WeeklyForecast } from './WeeklyForecast';
+import { GolfCourse } from '../../types';
+import { WeatherIcon } from '../common/WeatherIcon';
+import { HourlyForecast } from '../weather/HourlyForecast';
+import { WeeklyForecast } from '../weather/WeeklyForecast';
 
 interface CourseDetailViewProps {
   course: GolfCourse;

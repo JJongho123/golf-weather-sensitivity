@@ -1,5 +1,5 @@
-import { DailyWeather } from '../types';
-import { WeatherIcon } from './WeatherIcon';
+import { DailyWeather } from '../../types';
+import { WeatherIcon } from '../common/WeatherIcon';
 
 interface WeeklyForecastProps {
   forecast: DailyWeather[];

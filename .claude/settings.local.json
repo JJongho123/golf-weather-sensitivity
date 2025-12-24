@@ -6,7 +6,9 @@
       "Bash(npm run dev:*)",
       "Bash(ping:*)",
       "Bash(netstat:*)",
-      "Bash(findstr:*)"
+      "Bash(findstr:*)",
+      "Bash(npm run build:*)",
+      "Bash(tree:*)"
     ]
   }
 }

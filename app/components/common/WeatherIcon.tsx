@@ -1,5 +1,5 @@
 import { Sun, Cloud, CloudRain, CloudSnow, CloudDrizzle, Cloudy } from 'lucide-react';
-import { WeatherCondition } from '../types';
+import { WeatherCondition } from '../../types';
 
 interface WeatherIconProps {
   condition: WeatherCondition;
